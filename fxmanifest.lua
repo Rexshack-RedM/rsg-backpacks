@@ -22,6 +22,7 @@ server_scripts {
     'server/utils.lua',
     'server/database.lua',
     'server/main.lua',
+    'server/versionchecker.lua',
 }
 
 -- ox_lib locales: locales/<lang>.json, language picked by the `ox:locale` convar (falls back to en)
