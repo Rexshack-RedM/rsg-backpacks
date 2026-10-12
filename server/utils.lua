@@ -2,13 +2,6 @@ BP = BP or {}
 
 BP.BackpackByItem = Config.backpackByItem
 
--- Debug print (technical messages are not localized)
-function BP.Debug(...)
-    if Config.Debug then
-        print('^3[rsg-backpacks]^0', ...)
-    end
-end
-
 -- ox_lib notification to a player (texts come from locales)
 function BP.Notify(src, nType, titleKey, descKey, ...)
     TriggerClientEvent('ox_lib:notify', src, {

@@ -62,7 +62,7 @@ Everything you need to copy elsewhere is in the [`install`](install) folder.
 `install/items.lua` contains the 7 backpack entries. Paste them inside `RSGShared.Items = { ... }` in `rsg-core/shared/items.lua`. Backpack items **must** stay `unique = true` so each one keeps its own serial:
 
 ```lua
-['backpack_simple'] = { ['name'] = 'backpack_simple', ['label'] = 'Simple Backpack', ['weight'] = 7500, ['type'] = 'item', ['image'] = 'backpack_simple.png', ['unique'] = true, ['useable'] = true, ['shouldClose'] = true, ['combinable'] = nil, ['level'] = 0, ['description'] = 'A simple backpack to carry your belongings'},
+backpack_simple = { name = 'backpack_simple', label = 'Backpack Simple', weight = 100, type = 'item', image = 'backpack_simple.png', unique = true, useable = true, shouldClose = true, description = 'Backpack Simple — useful item to have around.', category = 'backpacks' },
 ```
 
 Items: `backpack_ammo`, `backpack_fish`, `backpack_nat`, `backpack_big`, `backpack_normal`, `backpack_simple`, `backpack_trapper`.
@@ -88,7 +88,6 @@ All settings are in [`shared/config.lua`](shared/config.lua).
 
 | Option | Default | Description |
 | --- | --- | --- |
-| `Config.Debug` | `false` | Extra debug prints |
 | `Config.ActionCooldown` | `1000` | Cooldown between backpack uses (ms) |
 | `Config.AutoCreateTable` | `true` | Build / upgrade `player_backpack` on start |
 | `Config.BlockNestedBackpacks` | `true` | Prevent backpacks from being stored inside backpack stashes |
@@ -113,6 +112,9 @@ Configured under `Config.Belt`:
 Everything involving items and money is validated on the server:
 
 - The client never sends stash names, serials, weights or slots: the stash is opened by the server directly from the item use.
+- Serials are assigned server-side by editing the item in place (`SetItemData`), so the backpack is never removed and re-added.
+- Item serials are validated (alphanumeric, max 32 chars) before any database lookup.
+- Backpack use is rate limited (`Config.ActionCooldown`) and guarded against parallel requests.
 - If the backpack leaves the player's inventory while its stash is open (given away, dropped), the stash is closed.
 - Backpacks can't be nested (`Config.BlockNestedBackpacks`). See below.
 
@@ -170,7 +172,7 @@ rsg-backpacks/
 │   ├── main.lua      # backpack prop handling
 │   └── belt.lua      # belt/back attachments
 ├── server/
-│   ├── utils.lua     # notify, rate limit, serial / stash helpers
+│   ├── utils.lua     # notify, rate limit, held-backpack lookup
 │   ├── database.lua  # automatic table build / upgrade
 │   └── main.lua      # serials, usable items, stash opening, nested block, recovery
 ├── shared/
@@ -199,6 +201,18 @@ rsg-backpacks/
 | `/backpackrecover` | server | Return backpacks stuck inside your own backpacks |
 
 Export: `exports['rsg-backpacks']:IsBackpackItem(itemName)` returns `true` if the item is one of the configured backpacks.
+
+---
+
+## Changelog
+
+### 1.0.1
+- Serial assignment edits the item in place instead of remove + add (removes an item-loss path).
+- Nested-block sweep only refreshes the inventory when something actually moved.
+- Fixed a race where reopening a backpack within 0.5s of closing it lost stash tracking.
+- Stricter serial validation.
+- Belt attachments retry if a prop model fails to load instead of staying hidden.
+- Removed unused `Config.Debug` / `BP.Debug`; one-backpack watchdog thread only starts when enabled.
 
 ---
 

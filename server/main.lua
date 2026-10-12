@@ -93,23 +93,18 @@ local function HandleUse(src, Player, cfg, item)
         for k, v in pairs(info) do newInfo[k] = v end
         newInfo.serie = serial
 
-        local removed = exports['rsg-inventory']:RemoveItem(src, cfg.item, 1, item.slot, 'rsg-backpacks-assign-serial')
-        if not removed then
+        -- write the serial straight into the item in its slot (no remove/add, so the item can never be lost)
+        local okSet, set = pcall(function()
+            return exports['rsg-inventory']:SetItemData(src, cfg.item, 'info', newInfo, item.slot)
+        end)
+        if not okSet or set == false then
             DeleteSerial(serial)
-            BP.Notify(src, 'error', 'error_title', 'backpack_serial_failed')
-            return
-        end
-
-        local added = exports['rsg-inventory']:AddItem(src, cfg.item, 1, item.slot, newInfo, 'rsg-backpacks-assign-serial')
-            or exports['rsg-inventory']:AddItem(src, cfg.item, 1, nil, newInfo, 'rsg-backpacks-assign-serial')
-        if not added then
-            print(('^1[rsg-backpacks] could not re-add %s (serial %s) to %s^0'):format(cfg.item, serial, citizenId))
             BP.Notify(src, 'error', 'error_title', 'backpack_serial_failed')
             return
         end
     else
         -- serial already on the item: make sure it is a known backpack
-        if #serial > 32 then
+        if #serial > 32 or not serial:match('^[%w]+$') then
             BP.Notify(src, 'error', 'error_title', 'backpack_not_found')
             return
         end
@@ -225,9 +220,11 @@ local function SweepNestedBackpacks(stashName, src)
 
     Sweeping[stashName] = nil
 
-    if changed then SaveStash(stashName, inv) end
     BP.Notify(src, 'error', 'backpack_title', 'backpack_nested_blocked')
-    TriggerClientEvent('rsg-inventory:client:updateInventory', src)
+    if changed then
+        SaveStash(stashName, inv)
+        TriggerClientEvent('rsg-inventory:client:updateInventory', src)
+    end
 end
 
 -- the backpack was given away / dropped while its stash is still open: close it
@@ -239,7 +236,6 @@ local function CloseIfNotHeld(src)
     pcall(function() exports['rsg-inventory']:CloseInventory(src, STASH_PREFIX .. serial) end)
 end
 
--- any item move by a player who has a backpack stash open
 ---------------------------------------------
 -- ONE BACKPACK LIMIT
 -- A backpack moved into the player's inventory (from a stash, drop, glovebox...) while they
@@ -290,8 +286,8 @@ RegisterNetEvent('rsg-inventory:server:SetInventoryData', function(fromInventory
 end)
 
 -- catch-all: warn players who got a second backpack another way (give, admin, other scripts)
-CreateThread(function()
-    while Config.OneBackpackOnly do
+if Config.OneBackpackOnly then CreateThread(function()
+    while true do
         Wait(15000)
         for _, src in ipairs(GetPlayers()) do
             src = tonumber(src)
@@ -301,13 +297,14 @@ CreateThread(function()
             end
         end
     end
-end)
+end) end
 
 -- backpack stash closed
 RegisterNetEvent('rsg-inventory:server:closeInventory', function(inventory)
     local src = source
     if not IsBackpackStash(inventory) or OpenStash[src] ~= inventory:sub(#STASH_PREFIX + 1) then return end
     SetTimeout(500, function()
+        if OpenStash[src] ~= inventory:sub(#STASH_PREFIX + 1) then return end
         if Config.BlockNestedBackpacks then SweepNestedBackpacks(inventory, src) end
         OpenStash[src] = nil
     end)

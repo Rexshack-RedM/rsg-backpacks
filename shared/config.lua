@@ -1,7 +1,5 @@
 Config = {}
 
-Config.Debug            = false
-
 -- Security / anti-abuse (server side)
 Config.ActionCooldown   = 1000                              -- ms between backpack open requests per player
 Config.AutoCreateTable  = true                              -- build / upgrade the `player_backpack` table on start (no manual SQL needed)

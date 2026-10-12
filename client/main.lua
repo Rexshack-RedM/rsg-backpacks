@@ -106,7 +106,7 @@ RegisterNetEvent('rsg:client:refreshSkin', function()
     if worn then worn.ped = 0 end
 end)
 
-RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
+AddEventHandler('RSGCore:Client:OnPlayerUnload', function()
     RemoveBackpackProp()
 end)
 

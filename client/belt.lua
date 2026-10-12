@@ -73,17 +73,17 @@ local function DetachItem(key)
 end
 
 local function AttachItem(key, cfg)
-    if stopping or attached[key] then return end
+    if stopping or attached[key] then return attached[key] ~= nil end
 
     local ped = PlayerPedId()
-    if not DoesEntityExist(ped) then return end
-    if not BP.LoadModel(cfg.model, 5000) then return end
+    if not DoesEntityExist(ped) then return false end
+    if not BP.LoadModel(cfg.model, 5000) then return false end
 
     local coords = GetEntityCoords(ped)
     local entity = CreateObject(cfg.model, coords.x, coords.y, coords.z, true, true, true)
     SetModelAsNoLongerNeeded(cfg.model)
 
-    if not entity or entity == 0 or not DoesEntityExist(entity) then return end
+    if not entity or entity == 0 or not DoesEntityExist(entity) then return false end
 
     local offset = PickBySex(cfg.offset, ped)
     local bone = PickBySex(cfg.bone, ped)
@@ -95,6 +95,7 @@ local function AttachItem(key, cfg)
         true, true, false, true, 1, true)
 
     attached[key] = entity
+    return true
 end
 
 local function ClearAll()
@@ -130,13 +131,14 @@ CreateThread(function()
             local shouldBeAttached = hasWeapon and (cfg.alwaysAttached or equipped ~= key) or false
 
             if states[key] ~= shouldBeAttached and (not lastChange[key] or (now - lastChange[key]) > Belt.debounceTime) then
+                local ok = true
                 if shouldBeAttached then
-                    AttachItem(key, cfg)
+                    ok = AttachItem(key, cfg)
                 else
                     DetachItem(key)
                 end
 
-                states[key] = shouldBeAttached
+                states[key] = ok and shouldBeAttached or nil -- failed attach is retried after the debounce
                 lastChange[key] = now
             end
 
