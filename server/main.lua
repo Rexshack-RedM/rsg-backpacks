@@ -71,13 +71,13 @@ local function CountCarried(list)
     return n
 end
 
-local function HandleUse(src, Player, cfg, item)
-    if Config.OneBackpackOnly and CountCarried(GetCarriedBackpacks(Player)) > 1 then
+local function HandleUse(src, RSGPlayer, cfg, item)
+    if Config.OneBackpackOnly and CountCarried(GetCarriedBackpacks(RSGPlayer)) > 1 then
         BP.Notify(src, 'error', 'backpack_title', 'backpack_only_one')
         return
     end
 
-    local citizenId = Player.PlayerData.citizenid
+    local citizenId = RSGPlayer.PlayerData.citizenid
     local info = type(item.info) == 'table' and item.info or {}
     local serial = info.serie
 
