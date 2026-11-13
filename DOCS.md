@@ -97,4 +97,4 @@ Open requests are rate limited. Nested and extra backpacks are removed by the se
 | Old resources conflict | Stop `hdrp-backpack` and `bln_belt_attachments` |
 | Table errors | Import `installation/player_backpack.sql` |
 
-Support: https://buymeacoffee.com/rexshack
+Support the Project : https://rexshack.tebex.store/
